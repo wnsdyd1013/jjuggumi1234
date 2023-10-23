@@ -22,7 +22,7 @@ int winner[20];
 int younghi;
 int random_player_move;
 char out;
-int is;
+int six;
 
 void mugung(int count) {
 	//char massage[100] = "무 궁 화 꽃 이 피 었 습 니 다";
@@ -124,23 +124,25 @@ void player_move(int player, int dir) {
 
 void safe(int player, int nx, int ny) {
 	int p = player;
-	back_buf[nx][ny] = back_buf[px[p]][py[p]];
-	back_buf[px[p]][py[p]] = ' ';
+	char currentChar = back_buf[px[p]][py[p]]; // 현재 위치의 문자
+
+	back_buf[nx][ny] = currentChar; // 새로운 위치에 현재 위치의 문자 복사
+	back_buf[px[p]][py[p]] = ' '; // 현재 위치를 공백으로 초기화
+
 	px[p] = nx;
 	py[p] = ny;
 
+	// 승자 확인
 	if ((nx == 5 && ny == 1) || (nx == 9 && ny == 1) || (nx >= 6 && nx <= 8 && ny == 2)) {
 		winner[p] = 777;
-		back_buf[px[p]][py[p]] = ' ';
+		back_buf[px[p]][py[p]] = ' '; // 승자 위치를 공백으로 초기화
 	}
 }
 
 void mugunghwa(void) {
-	int aa = 4;
-	int dead_players = 0;
-	int ii = 0;
+	int out_player = 0;
 	char out[100] = "player  dead!";
-	int is = 6;
+	int six = 6;
 	int a;
 	map_start();
 	system("cls");
@@ -152,8 +154,8 @@ void mugunghwa(void) {
 			break;
 		}
 		else if (key != K_UNDEFINED) {
-			int prev_x = px[0];
-			int prev_y = py[0];
+			int x_next = px[0];
+			int y_next = py[0];
 			move_manual(key);
 			if (younghi == 1) {
 				int state = 0;
@@ -163,30 +165,29 @@ void mugunghwa(void) {
 						break;
 					}
 				}
-				if (player[0] == true) {
-					if (px[0] != prev_x || py[0] != prev_y) {
+				if (player[0]) {
+					if (px[0] != x_next || py[0] != y_next) {
 						if (state == 0) {
 							player[0] = false;
-							if (player[0] == false) n_alive--; dead_players++;
-							back_buf[px[0]][py[0]] = ' ';
+							n_alive--;
+							out_player++;
 							int length = strlen(out);
-							for (int j = length; j >= is; j--) {
+							for (int j = length; j >= six; j--) {
 								out[j + 1] = out[j];
 							}
-							out[is] = ',';
-							is++;
-							for (int j = length; j >= is; j--) {
+							out[six] = ',';
+							six++;
+							for (int j = length; j >= six; j--) {
 								out[j + 1] = out[j];
 							}
-							out[is] = '0';
-							is++;
+							out[six] = '0';
+							six++;
 							gotoxy(N_ROW + 3, 0);
-							printf("%d", dead_players);
+							printf("%d", out_player);
 						}
-
 					}
 				}
-				if (px[0] != prev_x || py[0] != prev_y) {
+				if (px[0] != x_next || py[0] != y_next) {
 					if (state == 0) {
 						player[0] = false;
 						back_buf[px[0]][py[0]] = ' ';
@@ -194,37 +195,29 @@ void mugunghwa(void) {
 				}
 			}
 		}
-
 		// player 1 부터는 랜덤으로 움직임(4방향)
 		for (int i = 1; i < n_player; i++) {
-
-			if (tick % period[i] == 0) {//period[i] = randint(100, 500);
+			if (tick % period[i] == 0) {period[i] = randint(100, 300);
 				if (younghi == 1) {
 					random_player_move = randint(1, 10); // 1/10 확률로 player move
-					if (random_player_move == 1) {
-						if (winner[i] != 777) {
-							player_move(i, -1);
-						}
-						if (player[i] == true) {
+					if (random_player_move == 1 && winner[i] != 777) {
+						player_move(i, -1);
+						if (player[i]) {
 							if (px[i] != px_next[i] || py[i] != py_next[i]) {
 								int length = strlen(out);
-								for (int j = length; j >= is; j--) {
+								for (int j = length; j >= six; j--) {
 									out[j + 1] = out[j];
 								}
-								out[is] = ',';
-								is++;
-								for (int j = length; j >= is; j--) {
-									out[j + 1] = out[j];
-								}
-								out[is] = i + '0';
-								is++;
-								dead_players++;
+								out[six] = ',';
+								six++;
+								out[six] = i + '0';
+								six++;
+								out_player++;
 								gotoxy(N_ROW + 3, 0);
-								printf("%d", dead_players);
+								printf("%d", out_player);
 								player[i] = false;
 								back_buf[px[i]][py[i]] = ' ';
 								n_alive--;
-								ii++;
 							}
 						}
 					}
@@ -240,8 +233,6 @@ void mugunghwa(void) {
 							continue;
 						}
 					}
-
-
 					px_next[i] = px[i]; //저장된 x, y좌표 다시 바꿈
 					py_next[i] = py[i];
 				}
@@ -253,9 +244,9 @@ void mugunghwa(void) {
 		}
 		if (tick == 6000) {
 			younghi = 0;
-			if (dead_players != 0) {
+			if (out_player != 0) {
 				dialog_m(out);
-				dead_players = 0;
+				out_player = 0;
 				for (int i = 0; i < 23; i++) {
 					out[i] = ' ';
 				}
@@ -272,7 +263,7 @@ void mugunghwa(void) {
 				out[10] = 'a';
 				out[11] = 'd';
 				out[12] = '!';
-				is = 6;
+				six = 6;
 			}
 		}
 		if (tick >= 6010) {
